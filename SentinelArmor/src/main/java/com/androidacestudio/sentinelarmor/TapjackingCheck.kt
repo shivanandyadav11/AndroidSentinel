@@ -238,18 +238,20 @@ internal class TapjackingCheck(
      */
     private fun checkForOverlayWindowUsage(apkFile: File): Boolean {
         var usesOverlay = false
-        DexFile(apkFile).entries().toList().forEach { className ->
-            val cls = Class.forName(className)
-            cls.declaredMethods.forEachIndexed { _, method ->
-                if (method.name.contains("addView") || method.name.contains("setType")) {
-                    val body = method.toGenericString()
-                    if (body.contains("TYPE_APPLICATION_OVERLAY") || body.contains("TYPE_SYSTEM_ALERT")) {
-                        usesOverlay = true
-                        return@forEachIndexed
+        runCatching {
+            DexFile(apkFile).entries().toList().forEach { className ->
+                val cls = Class.forName(className)
+                cls.declaredMethods.forEachIndexed { _, method ->
+                    if (method.name.contains("addView") || method.name.contains("setType")) {
+                        val body = method.toGenericString()
+                        if (body.contains("TYPE_APPLICATION_OVERLAY") || body.contains("TYPE_SYSTEM_ALERT")) {
+                            usesOverlay = true
+                            return@forEachIndexed
+                        }
                     }
                 }
+                if (usesOverlay) return@forEach
             }
-            if (usesOverlay) return@forEach
         }
         return usesOverlay
     }
@@ -259,14 +261,16 @@ internal class TapjackingCheck(
      */
     private fun findSecurityRelatedMethods(apkFile: File): List<String> {
         val securityMethods = mutableListOf<String>()
-        DexFile(apkFile).entries().toList().forEach { className ->
-            val cls = Class.forName(className)
-            cls.declaredMethods.forEach { method ->
-                if (method.name.lowercase(Locale.ROOT).contains("security") ||
-                    method.name.lowercase(Locale.ROOT).contains("protect") ||
-                    method.name.lowercase(Locale.ROOT).contains("filter")
-                ) {
-                    securityMethods.add("${cls.simpleName}.${method.name}")
+        runCatching {
+            DexFile(apkFile).entries().toList().forEach { className ->
+                val cls = Class.forName(className)
+                cls.declaredMethods.forEach { method ->
+                    if (method.name.lowercase(Locale.ROOT).contains("security") ||
+                        method.name.lowercase(Locale.ROOT).contains("protect") ||
+                        method.name.lowercase(Locale.ROOT).contains("filter")
+                    ) {
+                        securityMethods.add("${cls.simpleName}.${method.name}")
+                    }
                 }
             }
         }
@@ -277,12 +281,14 @@ internal class TapjackingCheck(
      * Checks for usage of reflection, which might indicate runtime security checks.
      */
     private fun checkForReflectionUsage(apkFile: File): Boolean {
-        DexFile(apkFile).entries().toList().forEach { className ->
-            val cls = Class.forName(className)
-            cls.declaredMethods.forEach { method ->
-                val body = method.toGenericString()
-                if (body.contains("java.lang.reflect")) {
-                    return true
+        runCatching {
+            DexFile(apkFile).entries().toList().forEach { className ->
+                val cls = Class.forName(className)
+                cls.declaredMethods.forEach { method ->
+                    val body = method.toGenericString()
+                    if (body.contains("java.lang.reflect")) {
+                        return true
+                    }
                 }
             }
         }
