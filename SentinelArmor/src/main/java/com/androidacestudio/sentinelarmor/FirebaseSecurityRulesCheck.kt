@@ -28,7 +28,7 @@ import java.io.File
  * @see FirebaseDatabase
  * @see FirebaseFirestore
  */
-class FirebaseSecurityRulesCheck(
+internal class FirebaseSecurityRulesCheck(
     private val context: Context,
 ) : SecurityCheck {
     /**

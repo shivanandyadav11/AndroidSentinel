@@ -221,7 +221,55 @@ internal class InsecureDataStorageCheck(
                 "47494638" to "GIF",
                 "25504446" to "PDF",
                 "504B0304" to "ZIP",
-                // TODO Add more signatures as needed in future
+                "526172211A0700" to "RAR",
+                "377ABCAF271C" to "7Z",
+                "000001BA" to "MPEG",
+                "000001B3" to "MPEG",
+                "66747970" to "MP4",
+                "4D546864" to "MIDI",
+                "1A45DFA3" to "WEBM",
+                "3026B2758E66CF11" to "WMV",
+                "52494646" to "WAV",
+                "494433" to "MP3",
+                "4F676753" to "OGG",
+                "38425053" to "PSD",
+                "424D" to "BMP",
+                "49492A00" to "TIFF",
+                "4D4D002A" to "TIFF",
+                "49492A00" to "CR2",
+                "464F524D" to "AIFF",
+                "00000100" to "ICO",
+                "53514C69746520666F726D6174" to "SQLite",
+                "D0CF11E0A1B11AE1" to "MS Office",
+                "504B030414000600" to "XLSX",
+                "504B030414000200" to "DOCX",
+                "257064662D" to "FDF (Adobe Acrobat)",
+                "3C3F786D6C" to "XML",
+                "3C21444F4354" to "HTML",
+                "7B5C727466" to "RTF",
+                "CAFEBABE" to "Java Class",
+                "4D5A" to "EXE",
+                "1F8B08" to "GZIP",
+                "FD377A585A00" to "XZ",
+                "04224D18" to "LZ4",
+                "28546869732066696C65" to "AppleDouble encoded Macintosh file",
+                "4449434D" to "DICOM medical imaging data",
+                "774F4646" to "WOFF (Web Open Font Format)",
+                "774F4632" to "WOFF2 (Web Open Font Format 2.0)",
+                "3C3F786D6C20" to "SVG",
+                "0061736D" to "WASM (WebAssembly binary format)",
+                "CF8401" to "LNK (Windows Shortcut)",
+                "00000000" to "TGA",
+                "4C5646" to "LVM (Logical Volume Manager)",
+                "535A444488F02733" to "QEMU QCOW disk image",
+                "514649" to "QEMU QCOW2 disk image",
+                "53465331" to "Apple DiskImage",
+                "2142444E" to "Microsoft Outlook PST",
+                "4F54544F" to "OpenType font",
+                "1A0000040000" to "TOC (Table of Contents)",
+                "30314F52" to "TI-83 calculator file",
+                "4E45531A" to "NES ROM",
+                "7573746172" to "TAR archive",
             )
 
         val headerHex = header.joinToString("") { "%02X".format(it) }
@@ -254,7 +302,7 @@ internal class InsecureDataStorageCheck(
             }
         }
 
-        return repetitions > 5 // TODO Arbitrary threshold, adjust based on testing input
+        return repetitions > 5
     }
 
     private fun log2(x: Double): Double = kotlin.math.log(x, 2.0)

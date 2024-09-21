@@ -5,6 +5,9 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import androidx.annotation.RequiresApi
+import dalvik.system.DexFile
+import java.io.File
+import java.lang.reflect.Method
 import java.security.Key
 import java.security.KeyPairGenerator
 import java.security.KeyStore
@@ -42,7 +45,6 @@ internal class WeakCryptographyCheck(
         private val WEAK_CIPHER_ALGORITHMS = setOf("DES", "RC4", "Blowfish")
         private val WEAK_CIPHER_MODES = setOf("ECB")
         private const val MIN_RSA_KEY_SIZE = 2048
-        private const val MIN_ECC_KEY_SIZE = 224
         private const val MIN_AES_KEY_SIZE = 128
     }
 
@@ -71,7 +73,6 @@ internal class WeakCryptographyCheck(
         issues.addAll(checkKeyLengths())
         issues.addAll(checkInitializationVectors())
         issues.addAll(checkCustomCryptoImplementations())
-
         return issues
     }
 
@@ -97,7 +98,6 @@ internal class WeakCryptographyCheck(
                 // Algorithm not available, which is good in this case
             }
         }
-
         return issues
     }
 
@@ -123,7 +123,6 @@ internal class WeakCryptographyCheck(
                 // Algorithm not available, which is good in this case
             }
         }
-
         return issues
     }
 
@@ -149,7 +148,6 @@ internal class WeakCryptographyCheck(
                 // Mode not available, which is good in this case
             }
         }
-
         return issues
     }
 
@@ -312,8 +310,6 @@ internal class WeakCryptographyCheck(
      * @param algorithm The cryptographic algorithm to use ("AES" or "RSA").
      * @param spec The key generation parameter specification.
      * @return The generated [Key] object, or null if the algorithm is not supported.
-     * @throws InvalidAlgorithmParameterException if the given parameters are inappropriate for the key generator.
-     * @throws NoSuchAlgorithmException if the specified algorithm is not available.
      */
     @RequiresApi(Build.VERSION_CODES.M)
     private fun generateKey(
@@ -355,20 +351,157 @@ internal class WeakCryptographyCheck(
         }
 
     /**
-     * Checks for potential misuse of initialization vectors.
+     * Checks for potential misuse of initialization vectors (IVs) in cryptographic operations.
      *
-     * @return A list of [SecurityIssue]s related to initialization vector misuse.
+     * This method analyzes the application's code to identify common patterns that might
+     * indicate improper handling of initialization vectors. It checks for:
+     * 1. Hardcoded IVs
+     * 2. Potential IV reuse
+     * 3. Insufficient randomness in IV generation
+     * 4. Improper IV length
+     *
+     * The analysis is performed by examining the bytecode of the application's classes
+     * and methods for specific patterns that might indicate these issues.
+     *
+     * Limitations:
+     * - This is a static analysis and may produce false positives or miss some runtime behaviors.
+     * - The method relies on string matching in method bodies, which may not catch all cases
+     *   or may incorrectly flag some legitimate uses.
+     * - Obfuscated code may hinder the effectiveness of this analysis.
+     *
+     * @return A list of [SecurityIssue]s related to potential misuse of initialization vectors.
+     *         If the list is empty, no obvious misuse was detected.
      */
     private fun checkInitializationVectors(): List<SecurityIssue> {
-        // This is a placeholder. // TODO Update this later
-        // the app's code to detect actual IV usage patterns.
-        return listOf(
-            SecurityIssue(
-                severity = Severity.MEDIUM,
-                description = "Potential misuse of initialization vectors (IVs)",
-                recommendation = "Ensure IVs are randomly generated for each encryption operation and never reused.",
-            ),
-        )
+        val issues = mutableListOf<SecurityIssue>()
+        val packageName = context.packageName
+        val apkFile = File(context.packageCodePath)
+
+        try {
+            DexFile(apkFile).entries().toList().forEach { className ->
+                if (className.startsWith(packageName)) {
+                    val clazz = Class.forName(className)
+                    clazz.declaredMethods.forEach { method ->
+                        val body = method.toGenericString()
+
+                        checkForHardcodedIVs(body, clazz, method, issues)
+                        checkForIVReuse(body, clazz, method, issues)
+                        checkForInsufficientRandomness(body, clazz, method, issues)
+                        checkForImproperIVLength(body, clazz, method, issues)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            issues.add(
+                SecurityIssue(
+                    severity = Severity.LOW,
+                    description = "Unable to analyze initialization vector usage: ${e.message}",
+                    recommendation = "Manually review the code for proper IV handling in cryptographic operations.",
+                ),
+            )
+        }
+
+        return issues
+    }
+
+    /**
+     * Checks for potential use of hardcoded initialization vectors.
+     *
+     * @param body The method body to analyze.
+     * @param clazz The class containing the method.
+     * @param method The method being analyzed.
+     * @param issues The list to add any detected issues to.
+     */
+    private fun checkForHardcodedIVs(
+        body: String,
+        clazz: Class<*>,
+        method: Method,
+        issues: MutableList<SecurityIssue>,
+    ) {
+        if (body.contains("IvParameterSpec(") && body.contains("byte[]")) {
+            issues.add(
+                SecurityIssue(
+                    severity = Severity.HIGH,
+                    description = "Potential use of hardcoded IV detected in ${clazz.simpleName}.${method.name}",
+                    recommendation = "Generate a unique IV for each encryption operation instead of using hardcoded values.",
+                ),
+            )
+        }
+    }
+
+    /**
+     * Checks for potential reuse of initialization vectors.
+     *
+     * @param body The method body to analyze.
+     * @param clazz The class containing the method.
+     * @param method The method being analyzed.
+     * @param issues The list to add any detected issues to.
+     */
+    private fun checkForIVReuse(
+        body: String,
+        clazz: Class<*>,
+        method: Method,
+        issues: MutableList<SecurityIssue>,
+    ) {
+        if (body.contains("Cipher.init(") && !body.contains("IvParameterSpec(") && !body.contains("GCMParameterSpec(")) {
+            issues.add(
+                SecurityIssue(
+                    severity = Severity.MEDIUM,
+                    description = "Potential IV reuse detected in ${clazz.simpleName}.${method.name}",
+                    recommendation = "Ensure a new IV is generated for each encryption operation.",
+                ),
+            )
+        }
+    }
+
+    /**
+     * Checks for potential insufficient randomness in IV generation.
+     *
+     * @param body The method body to analyze.
+     * @param clazz The class containing the method.
+     * @param method The method being analyzed.
+     * @param issues The list to add any detected issues to.
+     */
+    private fun checkForInsufficientRandomness(
+        body: String,
+        clazz: Class<*>,
+        method: Method,
+        issues: MutableList<SecurityIssue>,
+    ) {
+        if (body.contains("SecureRandom(") && body.contains("setSeed(")) {
+            issues.add(
+                SecurityIssue(
+                    severity = Severity.MEDIUM,
+                    description = "Potential use of seeded SecureRandom for IV generation in ${clazz.simpleName}.${method.name}",
+                    recommendation = "Avoid seeding SecureRandom when generating IVs to ensure proper randomness.",
+                ),
+            )
+        }
+    }
+
+    /**
+     * Checks for potential use of improper IV length.
+     *
+     * @param body The method body to analyze.
+     * @param clazz The class containing the method.
+     * @param method The method being analyzed.
+     * @param issues The list to add any detected issues to.
+     */
+    private fun checkForImproperIVLength(
+        body: String,
+        clazz: Class<*>,
+        method: Method,
+        issues: MutableList<SecurityIssue>,
+    ) {
+        if (body.contains("IvParameterSpec(") && body.contains(".getBytes()")) {
+            issues.add(
+                SecurityIssue(
+                    severity = Severity.MEDIUM,
+                    description = "Potential use of improper IV length in ${clazz.simpleName}.${method.name}",
+                    recommendation = "Ensure the IV length matches the block size of the cipher (typically 16 bytes for AES).",
+                ),
+            )
+        }
     }
 
     /**
@@ -392,7 +525,6 @@ internal class WeakCryptographyCheck(
                 ),
             )
         }
-
         return issues
     }
 }
