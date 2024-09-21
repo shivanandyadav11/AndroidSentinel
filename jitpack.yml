@@ -1,0 +1,7 @@
+jdk:
+  - openjdk11
+before_install:
+  - wget https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.tar.gz
+  - tar -xf amazon-corretto-11-x64-linux-jdk.tar.gz
+  - export JAVA_HOME=$PWD/amazon-corretto-11.0.20_9
+  - export PATH=$JAVA_HOME/bin:$PATH
