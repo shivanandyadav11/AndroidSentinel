@@ -34,8 +34,9 @@ import javax.crypto.SecretKey
  * @see MessageDigest
  * @see Cipher
  */
-internal class WeakCryptographyCheck(private val context: Context) : SecurityCheck {
-
+internal class WeakCryptographyCheck(
+    private val context: Context,
+) : SecurityCheck {
     companion object {
         private val WEAK_HASH_ALGORITHMS = setOf("MD5", "SHA-1")
         private val WEAK_CIPHER_ALGORITHMS = setOf("DES", "RC4", "Blowfish")
@@ -89,8 +90,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                     SecurityIssue(
                         severity = Severity.HIGH,
                         description = "Weak hash function detected: $algorithm",
-                        recommendation = "Replace $algorithm with a stronger alternative like SHA-256 or SHA-3."
-                    )
+                        recommendation = "Replace $algorithm with a stronger alternative like SHA-256 or SHA-3.",
+                    ),
                 )
             } catch (e: Exception) {
                 // Algorithm not available, which is good in this case
@@ -115,8 +116,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                     SecurityIssue(
                         severity = Severity.HIGH,
                         description = "Insecure cipher algorithm detected: $algorithm",
-                        recommendation = "Replace $algorithm with a secure alternative like AES."
-                    )
+                        recommendation = "Replace $algorithm with a secure alternative like AES.",
+                    ),
                 )
             } catch (e: Exception) {
                 // Algorithm not available, which is good in this case
@@ -141,8 +142,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                     SecurityIssue(
                         severity = Severity.MEDIUM,
                         description = "Weak cipher mode detected: $mode",
-                        recommendation = "Avoid using $mode mode. Prefer GCM or CBC mode with proper IV handling."
-                    )
+                        recommendation = "Avoid using $mode mode. Prefer GCM or CBC mode with proper IV handling.",
+                    ),
                 )
             } catch (e: Exception) {
                 // Mode not available, which is good in this case
@@ -191,8 +192,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                                         SecurityIssue(
                                             severity = Severity.HIGH,
                                             description = "RSA key with insufficient length detected: $keySize bits for alias '$alias'",
-                                            recommendation = "Use RSA keys with at least $MIN_RSA_KEY_SIZE bits."
-                                        )
+                                            recommendation = "Use RSA keys with at least $MIN_RSA_KEY_SIZE bits.",
+                                        ),
                                     )
                                 }
                             }
@@ -211,8 +212,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                                 SecurityIssue(
                                     severity = Severity.HIGH,
                                     description = "AES key with insufficient length detected: $keySize bits for alias '$alias'",
-                                    recommendation = "Use AES keys with at least $MIN_AES_KEY_SIZE bits."
-                                )
+                                    recommendation = "Use AES keys with at least $MIN_AES_KEY_SIZE bits.",
+                                ),
                             )
                         }
                     }
@@ -223,8 +224,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                 SecurityIssue(
                     severity = Severity.LOW,
                     description = "Unable to analyze KeyStore entries: ${e.message}",
-                    recommendation = "Ensure proper KeyStore usage and permissions."
-                )
+                    recommendation = "Ensure proper KeyStore usage and permissions.",
+                ),
             )
         }
         return issues
@@ -247,21 +248,29 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
         algorithms.forEach { algorithm ->
             try {
                 val cipher = Cipher.getInstance(algorithm)
-                val keyGenParameterSpec = when (algorithm) {
-                    "AES" -> KeyGenParameterSpec.Builder(
-                        "temp_key",
-                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                    ).setKeySize(128).setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7).build()
+                val keyGenParameterSpec =
+                    when (algorithm) {
+                        "AES" ->
+                            KeyGenParameterSpec
+                                .Builder(
+                                    "temp_key",
+                                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+                                ).setKeySize(128)
+                                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                                .build()
 
-                    "RSA" -> KeyGenParameterSpec.Builder(
-                        "temp_key",
-                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                    ).setKeySize(2048)
-                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1).build()
+                        "RSA" ->
+                            KeyGenParameterSpec
+                                .Builder(
+                                    "temp_key",
+                                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+                                ).setKeySize(2048)
+                                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                                .build()
 
-                    else -> null
-                }
+                        else -> null
+                    }
 
                 if (keyGenParameterSpec != null) {
                     val key = generateKey(algorithm, keyGenParameterSpec)
@@ -269,19 +278,20 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                         cipher.init(Cipher.ENCRYPT_MODE, key)
                         val keySize = getKeySize(key)
 
-                        val minSize = when (algorithm) {
-                            "AES" -> MIN_AES_KEY_SIZE
-                            "RSA" -> MIN_RSA_KEY_SIZE
-                            else -> 0
-                        }
+                        val minSize =
+                            when (algorithm) {
+                                "AES" -> MIN_AES_KEY_SIZE
+                                "RSA" -> MIN_RSA_KEY_SIZE
+                                else -> 0
+                            }
 
                         if (keySize < minSize) {
                             issues.add(
                                 SecurityIssue(
                                     severity = Severity.HIGH,
                                     description = "$algorithm key with insufficient length detected: $keySize bits",
-                                    recommendation = "Use $algorithm keys with at least $minSize bits."
-                                )
+                                    recommendation = "Use $algorithm keys with at least $minSize bits.",
+                                ),
                             )
                         }
                     }
@@ -306,8 +316,11 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
      * @throws NoSuchAlgorithmException if the specified algorithm is not available.
      */
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun generateKey(algorithm: String, spec: KeyGenParameterSpec): Key? {
-        return when (algorithm) {
+    private fun generateKey(
+        algorithm: String,
+        spec: KeyGenParameterSpec,
+    ): Key? =
+        when (algorithm) {
             "AES" -> {
                 val keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES)
                 keyGen.init(spec)
@@ -322,7 +335,6 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
 
             else -> null
         }
-    }
 
     /**
      * Determines the size of the given cryptographic key in bits.
@@ -335,13 +347,12 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
      * @param key The [Key] object to measure.
      * @return The size of the key in bits, or 0 if the key type is not supported.
      */
-    private fun getKeySize(key: Key): Int {
-        return when (key) {
+    private fun getKeySize(key: Key): Int =
+        when (key) {
             is RSAKey -> key.modulus.bitLength()
             is SecretKey -> key.encoded.size * 8
             else -> 0
         }
-    }
 
     /**
      * Checks for potential misuse of initialization vectors.
@@ -355,8 +366,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
             SecurityIssue(
                 severity = Severity.MEDIUM,
                 description = "Potential misuse of initialization vectors (IVs)",
-                recommendation = "Ensure IVs are randomly generated for each encryption operation and never reused."
-            )
+                recommendation = "Ensure IVs are randomly generated for each encryption operation and never reused.",
+            ),
         )
     }
 
@@ -377,8 +388,8 @@ internal class WeakCryptographyCheck(private val context: Context) : SecurityChe
                 SecurityIssue(
                     severity = Severity.HIGH,
                     description = "Custom cryptographic providers detected: ${customProviders.joinToString { it.name }}",
-                    recommendation = "Avoid using custom cryptographic implementations. Rely on well-vetted standard implementations."
-                )
+                    recommendation = "Avoid using custom cryptographic implementations. Rely on well-vetted standard implementations.",
+                ),
             )
         }
 

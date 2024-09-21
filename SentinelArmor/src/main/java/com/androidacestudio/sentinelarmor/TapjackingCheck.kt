@@ -5,10 +5,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.view.Window
 import android.view.WindowManager
-import java.io.File
-import java.util.jar.JarFile
 import dalvik.system.DexFile
+import java.io.File
 import java.util.Locale
+import java.util.jar.JarFile
 
 /**
  * A security check that identifies potential vulnerabilities related to tapjacking (clickjacking) in Android applications.
@@ -28,8 +28,9 @@ import java.util.Locale
  * @see Window
  * @see WindowManager
  */
-internal class TapjackingCheck(private val context: Context) : SecurityCheck {
-
+internal class TapjackingCheck(
+    private val context: Context,
+) : SecurityCheck {
     /**
      * Performs the tapjacking security check.
      *
@@ -59,10 +60,11 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
      */
     private fun checkOverlayPermissions(): List<SecurityIssue> {
         val issues = mutableListOf<SecurityIssue>()
-        val packageInfo = context.packageManager.getPackageInfo(
-            context.packageName,
-            PackageManager.GET_PERMISSIONS
-        )
+        val packageInfo =
+            context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_PERMISSIONS,
+            )
 
         packageInfo.requestedPermissions?.forEach { permission ->
             when (permission) {
@@ -71,8 +73,8 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                         SecurityIssue(
                             severity = Severity.MEDIUM,
                             description = "App requests SYSTEM_ALERT_WINDOW permission, which can be used for overlay attacks",
-                            recommendation = "Ensure this permission is absolutely necessary. If used, implement additional security measures to prevent misuse."
-                        )
+                            recommendation = "Ensure this permission is absolutely necessary. If used, implement additional security measures to prevent misuse.",
+                        ),
                     )
                 }
             }
@@ -89,10 +91,11 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
         val issues = mutableListOf<SecurityIssue>()
 
         try {
-            val packageInfo = context.packageManager.getPackageInfo(
-                context.packageName,
-                PackageManager.GET_ACTIVITIES
-            )
+            val packageInfo =
+                context.packageManager.getPackageInfo(
+                    context.packageName,
+                    PackageManager.GET_ACTIVITIES,
+                )
             val activityInfos = packageInfo.activities ?: return issues
 
             activityInfos.forEach { activityInfo ->
@@ -106,8 +109,8 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                             SecurityIssue(
                                 severity = Severity.HIGH,
                                 description = "FLAG_SECURE is not set for activity: ${activityInfo.name}",
-                                recommendation = "Set FLAG_SECURE on the activity's window to prevent screen capture and enhance protection against tapjacking."
-                            )
+                                recommendation = "Set FLAG_SECURE on the activity's window to prevent screen capture and enhance protection against tapjacking.",
+                            ),
                         )
                     }
                 }
@@ -119,8 +122,8 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                         SecurityIssue(
                             severity = Severity.MEDIUM,
                             description = "filterTouchesWhenObscured is not enabled for activity: ${activityInfo.name}",
-                            recommendation = "Enable filterTouchesWhenObscured on the root view to filter touch events when the view's window is obscured."
-                        )
+                            recommendation = "Enable filterTouchesWhenObscured on the root view to filter touch events when the view's window is obscured.",
+                        ),
                     )
                 }
             }
@@ -129,8 +132,8 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                 SecurityIssue(
                     severity = Severity.LOW,
                     description = "Unable to inspect activity configurations: ${e.message}",
-                    recommendation = "Ensure all activities implement proper tapjacking protections."
-                )
+                    recommendation = "Ensure all activities implement proper tapjacking protections.",
+                ),
             )
         }
         return issues
@@ -162,8 +165,8 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                     SecurityIssue(
                         severity = Severity.LOW,
                         description = "Custom View classes detected: ${customViewClasses.joinToString()}",
-                        recommendation = "Verify that these custom View classes implement proper touch event filtering."
-                    )
+                        recommendation = "Verify that these custom View classes implement proper touch event filtering.",
+                    ),
                 )
             }
 
@@ -173,8 +176,8 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                     SecurityIssue(
                         severity = Severity.MEDIUM,
                         description = "Usage of overlay windows detected",
-                        recommendation = "Ensure overlay windows are used securely and don't introduce tapjacking vulnerabilities."
-                    )
+                        recommendation = "Ensure overlay windows are used securely and don't introduce tapjacking vulnerabilities.",
+                    ),
                 )
             }
 
@@ -185,8 +188,8 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                     SecurityIssue(
                         severity = Severity.LOW,
                         description = "Potential custom security methods detected: ${securityMethods.joinToString()}",
-                        recommendation = "Review these methods to ensure they provide adequate tapjacking protection."
-                    )
+                        recommendation = "Review these methods to ensure they provide adequate tapjacking protection.",
+                    ),
                 )
             }
 
@@ -196,18 +199,17 @@ internal class TapjackingCheck(private val context: Context) : SecurityCheck {
                     SecurityIssue(
                         severity = Severity.LOW,
                         description = "Reflection usage detected",
-                        recommendation = "Verify that reflection is not used to bypass security measures or implement insecure dynamic behavior."
-                    )
+                        recommendation = "Verify that reflection is not used to bypass security measures or implement insecure dynamic behavior.",
+                    ),
                 )
             }
-
         } catch (e: Exception) {
             issues.add(
                 SecurityIssue(
                     severity = Severity.LOW,
                     description = "Error analyzing custom tapjacking protections: ${e.message}",
-                    recommendation = "Manually review the app for custom tapjacking protection implementations."
-                )
+                    recommendation = "Manually review the app for custom tapjacking protection implementations.",
+                ),
             )
         }
         return issues

@@ -20,8 +20,9 @@ import android.os.Build
  * @see SecurityCheck
  * @see KeyguardManager
  */
-internal class ScreenLockProtectionCheck(private val context: Context) : SecurityCheck {
-
+internal class ScreenLockProtectionCheck(
+    private val context: Context,
+) : SecurityCheck {
     /**
      * Performs the screen lock protection check.
      *
@@ -44,8 +45,8 @@ internal class ScreenLockProtectionCheck(private val context: Context) : Securit
                 SecurityIssue(
                     severity = Severity.HIGH,
                     description = "Device does not have a secure screen lock set",
-                    recommendation = "Enable a secure screen lock (PIN, pattern, password, or biometric) to protect device data"
-                )
+                    recommendation = "Enable a secure screen lock (PIN, pattern, password, or biometric) to protect device data",
+                ),
             )
         }
 
@@ -56,8 +57,8 @@ internal class ScreenLockProtectionCheck(private val context: Context) : Securit
                     SecurityIssue(
                         severity = Severity.MEDIUM,
                         description = "Device is using a weak or no screen lock",
-                        recommendation = "Set up a strong screen lock method (PIN, password, or pattern) for better security"
-                    )
+                        recommendation = "Set up a strong screen lock method (PIN, password, or pattern) for better security",
+                    ),
                 )
             }
         }
@@ -68,13 +69,14 @@ internal class ScreenLockProtectionCheck(private val context: Context) : Securit
                 keyguardManager.isDeviceLocked -> {
                     // Device is currently locked, which is good
                 }
+
                 !keyguardManager.isKeyguardSecure -> {
                     issues.add(
                         SecurityIssue(
                             severity = Severity.LOW,
                             description = "Device lock screen is not secure",
-                            recommendation = "Configure a secure lock screen to protect device data when the device is locked"
-                        )
+                            recommendation = "Configure a secure lock screen to protect device data when the device is locked",
+                        ),
                     )
                 }
             }
@@ -93,12 +95,11 @@ internal class ScreenLockProtectionCheck(private val context: Context) : Securit
      * @param keyguardManager The [KeyguardManager] instance to use for the check
      * @return `true` if the device has a secure lock screen, `false` otherwise
      */
-    private fun isDeviceSecure(keyguardManager: KeyguardManager): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    private fun isDeviceSecure(keyguardManager: KeyguardManager): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             keyguardManager.isDeviceSecure
         } else {
             @Suppress("DEPRECATION")
             keyguardManager.isKeyguardSecure
         }
-    }
 }

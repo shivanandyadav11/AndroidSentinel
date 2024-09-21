@@ -3,13 +3,16 @@ package com.androidacestudio.sentinelarmor
 import android.content.Context
 import android.content.pm.PackageManager
 
-internal class PermissionsCheck(private val context: Context) : SecurityCheck {
+internal class PermissionsCheck(
+    private val context: Context,
+) : SecurityCheck {
     override fun check(): List<SecurityIssue> {
         val issues = mutableListOf<SecurityIssue>()
-        val packageInfo = context.packageManager.getPackageInfo(
-            context.packageName,
-            PackageManager.GET_PERMISSIONS
-        )
+        val packageInfo =
+            context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_PERMISSIONS,
+            )
 
         packageInfo.requestedPermissions?.forEach { permission ->
             when {
@@ -18,8 +21,8 @@ internal class PermissionsCheck(private val context: Context) : SecurityCheck {
                         SecurityIssue(
                             Severity.LOW,
                             "Internet permission granted",
-                            "Ensure proper network security measures are in place."
-                        )
+                            "Ensure proper network security measures are in place.",
+                        ),
                     )
 
                 permission.contains("android.permission.WRITE_EXTERNAL_STORAGE") ->
@@ -27,8 +30,8 @@ internal class PermissionsCheck(private val context: Context) : SecurityCheck {
                         SecurityIssue(
                             Severity.MEDIUM,
                             "External storage write permission granted",
-                            "Be cautious about storing sensitive data."
-                        )
+                            "Be cautious about storing sensitive data.",
+                        ),
                     )
                 // Add more permission checks here
             }

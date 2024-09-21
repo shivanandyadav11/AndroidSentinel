@@ -24,8 +24,9 @@ import kotlin.math.min
  * @see SecurityCheck
  * @see SharedPreferences
  */
-internal class InsecureDataStorageCheck(private val context: Context) : SecurityCheck {
-
+internal class InsecureDataStorageCheck(
+    private val context: Context,
+) : SecurityCheck {
     companion object {
         private val SENSITIVE_KEYS = listOf("password", "credit_card", "ssn", "api_key", "token")
         private const val PREFERENCES_NAME = "app_preferences"
@@ -70,8 +71,8 @@ internal class InsecureDataStorageCheck(private val context: Context) : Security
                     SecurityIssue(
                         severity = Severity.HIGH,
                         description = "Potentially sensitive data found in SharedPreferences: $key",
-                        recommendation = "Avoid storing sensitive data in SharedPreferences. Use Android Keystore System for secure storage."
-                    )
+                        recommendation = "Avoid storing sensitive data in SharedPreferences. Use Android Keystore System for secure storage.",
+                    ),
                 )
             }
         }
@@ -94,8 +95,8 @@ internal class InsecureDataStorageCheck(private val context: Context) : Security
                     SecurityIssue(
                         severity = Severity.MEDIUM,
                         description = "File in internal storage has insecure permissions: ${file.name}",
-                        recommendation = "Ensure proper file permissions. Use Context.MODE_PRIVATE for file operations."
-                    )
+                        recommendation = "Ensure proper file permissions. Use Context.MODE_PRIVATE for file operations.",
+                    ),
                 )
             }
         }
@@ -117,8 +118,8 @@ internal class InsecureDataStorageCheck(private val context: Context) : Security
                 SecurityIssue(
                     severity = Severity.HIGH,
                     description = "App is using external storage, which can be insecure",
-                    recommendation = "Avoid storing sensitive data in external storage. Use internal storage or encrypted files for sensitive data."
-                )
+                    recommendation = "Avoid storing sensitive data in external storage. Use internal storage or encrypted files for sensitive data.",
+                ),
             )
         }
 
@@ -141,8 +142,8 @@ internal class InsecureDataStorageCheck(private val context: Context) : Security
                     SecurityIssue(
                         severity = Severity.MEDIUM,
                         description = "Potentially unencrypted database found: $dbName",
-                        recommendation = "Consider using encrypted databases or SQLCipher for sensitive data storage."
-                    )
+                        recommendation = "Consider using encrypted databases or SQLCipher for sensitive data storage.",
+                    ),
                 )
             }
         }
@@ -213,14 +214,15 @@ internal class InsecureDataStorageCheck(private val context: Context) : Security
      * If it does, it's likely not encrypted.
      */
     private fun hasCommonFileSignature(header: ByteArray): Boolean {
-        val signatures = mapOf(
-            "FFD8FF" to "JPEG",
-            "89504E47" to "PNG",
-            "47494638" to "GIF",
-            "25504446" to "PDF",
-            "504B0304" to "ZIP"
-            // TODO Add more signatures as needed in future
-        )
+        val signatures =
+            mapOf(
+                "FFD8FF" to "JPEG",
+                "89504E47" to "PNG",
+                "47494638" to "GIF",
+                "25504446" to "PDF",
+                "504B0304" to "ZIP",
+                // TODO Add more signatures as needed in future
+            )
 
         val headerHex = header.joinToString("") { "%02X".format(it) }
         return signatures.any { (signature, _) -> headerHex.startsWith(signature) }

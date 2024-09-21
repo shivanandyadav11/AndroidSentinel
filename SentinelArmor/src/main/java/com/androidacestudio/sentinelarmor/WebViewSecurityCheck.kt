@@ -25,8 +25,9 @@ import android.webkit.WebView
  * @see WebView
  * @see WebSettings
  */
-internal class WebViewSecurityCheck(private val context: Context) : SecurityCheck {
-
+internal class WebViewSecurityCheck(
+    private val context: Context,
+) : SecurityCheck {
     /**
      * Performs the WebView security check.
      *
@@ -56,10 +57,11 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
      * @return true if WebView is used, false otherwise.
      */
     private fun isWebViewUsed(): Boolean {
-        val packageInfo = context.packageManager.getPackageInfo(
-            context.packageName,
-            PackageManager.GET_ACTIVITIES
-        )
+        val packageInfo =
+            context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_ACTIVITIES,
+            )
         return packageInfo.activities.any { it.name.contains("WebView", ignoreCase = true) }
     }
 
@@ -70,10 +72,11 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
      */
     private fun checkWebViewPermissions(): List<SecurityIssue> {
         val issues = mutableListOf<SecurityIssue>()
-        val packageInfo = context.packageManager.getPackageInfo(
-            context.packageName,
-            PackageManager.GET_PERMISSIONS
-        )
+        val packageInfo =
+            context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_PERMISSIONS,
+            )
 
         packageInfo.requestedPermissions?.forEach { permission ->
             when (permission) {
@@ -82,8 +85,8 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                         SecurityIssue(
                             severity = Severity.LOW,
                             description = "Internet permission is granted, which is required for WebView but also increases attack surface",
-                            recommendation = "Ensure that WebView is properly secured and only loads content from trusted sources."
-                        )
+                            recommendation = "Ensure that WebView is properly secured and only loads content from trusted sources.",
+                        ),
                     )
                 }
             }
@@ -108,8 +111,8 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                     SecurityIssue(
                         severity = Severity.MEDIUM,
                         description = "JavaScript is enabled in WebView",
-                        recommendation = "Disable JavaScript if not necessary, or ensure it's only enabled for trusted content."
-                    )
+                        recommendation = "Disable JavaScript if not necessary, or ensure it's only enabled for trusted content.",
+                    ),
                 )
             }
 
@@ -118,8 +121,8 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                     SecurityIssue(
                         severity = Severity.HIGH,
                         description = "File access is allowed in WebView",
-                        recommendation = "Disable file access in WebView unless absolutely necessary."
-                    )
+                        recommendation = "Disable file access in WebView unless absolutely necessary.",
+                    ),
                 )
             }
 
@@ -128,8 +131,8 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                     SecurityIssue(
                         severity = Severity.MEDIUM,
                         description = "Content access is allowed in WebView",
-                        recommendation = "Disable content access in WebView if not required."
-                    )
+                        recommendation = "Disable content access in WebView if not required.",
+                    ),
                 )
             }
 
@@ -138,8 +141,8 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                     SecurityIssue(
                         severity = Severity.HIGH,
                         description = "File access from file URLs is allowed in WebView",
-                        recommendation = "Disable file access from file URLs to prevent potential security vulnerabilities."
-                    )
+                        recommendation = "Disable file access from file URLs to prevent potential security vulnerabilities.",
+                    ),
                 )
             }
 
@@ -148,8 +151,8 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                     SecurityIssue(
                         severity = Severity.HIGH,
                         description = "Universal access from file URLs is allowed in WebView",
-                        recommendation = "Disable universal access from file URLs to prevent potential security vulnerabilities."
-                    )
+                        recommendation = "Disable universal access from file URLs to prevent potential security vulnerabilities.",
+                    ),
                 )
             }
 
@@ -158,8 +161,8 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                     SecurityIssue(
                         severity = Severity.HIGH,
                         description = "Mixed content is always allowed in WebView",
-                        recommendation = "Set mixed content mode to MIXED_CONTENT_NEVER_ALLOW or handle with caution."
-                    )
+                        recommendation = "Set mixed content mode to MIXED_CONTENT_NEVER_ALLOW or handle with caution.",
+                    ),
                 )
             }
 
@@ -170,19 +173,18 @@ internal class WebViewSecurityCheck(private val context: Context) : SecurityChec
                         SecurityIssue(
                             severity = Severity.MEDIUM,
                             description = "Safe Browsing is not enabled in WebView",
-                            recommendation = "Enable Safe Browsing in WebView for enhanced security."
-                        )
+                            recommendation = "Enable Safe Browsing in WebView for enhanced security.",
+                        ),
                     )
                 }
             }
-
         } catch (e: Exception) {
             issues.add(
                 SecurityIssue(
                     severity = Severity.LOW,
                     description = "Unable to inspect WebView settings: ${e.message}",
-                    recommendation = "Ensure WebView is properly configured in your application."
-                )
+                    recommendation = "Ensure WebView is properly configured in your application.",
+                ),
             )
         }
         return issues

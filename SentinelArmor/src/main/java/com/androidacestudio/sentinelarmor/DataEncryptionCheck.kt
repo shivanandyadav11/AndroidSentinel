@@ -1,10 +1,12 @@
 package com.androidacestudio.sentinelarmor
 
-import android.content.Context
 import android.app.KeyguardManager
+import android.content.Context
 import android.os.Build
 
-internal class DataEncryptionCheck(private val context: Context) : SecurityCheck {
+internal class DataEncryptionCheck(
+    private val context: Context,
+) : SecurityCheck {
     override fun check(): List<SecurityIssue> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val keyguardManager =
@@ -14,8 +16,8 @@ internal class DataEncryptionCheck(private val context: Context) : SecurityCheck
                     SecurityIssue(
                         Severity.HIGH,
                         "Device encryption is not enabled",
-                        "Enable device encryption to protect sensitive data."
-                    )
+                        "Enable device encryption to protect sensitive data.",
+                    ),
                 )
             }
         }
