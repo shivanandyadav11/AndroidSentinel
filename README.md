@@ -28,7 +28,7 @@ Add the AndroidSentinel dependency to your project using one of the following me
 
 ```groovy
 dependencies {
-    implementation 'com.example.androidsentinel:sentinelarmor:1.0.0'
+    implementation 'com.example.androidsentinel:sentinelarmor:1.1.2' // Use Latest Version
 }
 ```
 
@@ -36,7 +36,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("com.example.androidsentinel:sentinelarmor:1.0.0")
+    implementation("com.example.androidsentinel:sentinelarmor:1.1.2") // Use Latest Version
 }
 ```
 
@@ -49,6 +49,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 }
 ```
@@ -60,6 +61,16 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
     }
 }
 ```
@@ -88,6 +99,7 @@ securityIssues.forEach { issue ->
     // Handle or display the security issue as needed
 }
 ```
+4. Open LogCat and filter with Security Issue to see logs.
 
 ## Security Checks
 
