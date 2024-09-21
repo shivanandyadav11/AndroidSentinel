@@ -1,5 +1,5 @@
 plugins {
-   alias(libs.plugins.android.library)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     id("maven-publish")
 }
@@ -20,7 +20,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -44,4 +44,9 @@ publishing {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+
+    // Firebase dependencies
+    implementation(libs.firebase.common.ktx)
+    implementation(libs.firebase.database.ktx)
+    implementation(libs.firebase.firestore.ktx)
 }
