@@ -88,6 +88,8 @@ internal class NetworkSecurityConfigCheck(
         } catch (e: PackageManager.NameNotFoundException) {
             // This shouldn't happen as we're querying our own package
             return 0
+        } catch (_: Exception) {
+            return 0
         }
     }
 

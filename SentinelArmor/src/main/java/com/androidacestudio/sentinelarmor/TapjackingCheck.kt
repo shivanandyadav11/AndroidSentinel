@@ -238,18 +238,20 @@ internal class TapjackingCheck(
      */
     private fun checkForOverlayWindowUsage(apkFile: File): Boolean {
         var usesOverlay = false
-        DexFile(apkFile).entries().toList().forEach { className ->
-            val cls = Class.forName(className)
-            cls.declaredMethods.forEachIndexed { _, method ->
-                if (method.name.contains("addView") || method.name.contains("setType")) {
-                    val body = method.toGenericString()
-                    if (body.contains("TYPE_APPLICATION_OVERLAY") || body.contains("TYPE_SYSTEM_ALERT")) {
-                        usesOverlay = true
-                        return@forEachIndexed
+        runCatching {
+            DexFile(apkFile).entries().toList().forEach { className ->
+                val cls = Class.forName(className)
+                cls.declaredMethods.forEachIndexed { _, method ->
+                    if (method.name.contains("addView") || method.name.contains("setType")) {
+                        val body = method.toGenericString()
+                        if (body.contains("TYPE_APPLICATION_OVERLAY") || body.contains("TYPE_SYSTEM_ALERT")) {
+                            usesOverlay = true
+                            return@forEachIndexed
+                        }
                     }
                 }
+                if (usesOverlay) return@forEach
             }
-            if (usesOverlay) return@forEach
         }
         return usesOverlay
     }
